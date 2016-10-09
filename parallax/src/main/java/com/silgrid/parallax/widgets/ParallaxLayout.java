@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -60,6 +61,17 @@ public class ParallaxLayout extends FrameLayout implements TiltSensor.SensorCall
 		super.onDetachedFromWindow();
 
 		mTiltSensor.onPause();
+	}
+
+	@Override
+	public void onWindowFocusChanged(boolean hasWindowFocus) {
+		super.onWindowFocusChanged(hasWindowFocus);
+
+		if (hasWindowFocus) {
+			mTiltSensor.onResume();
+		} else {
+			mTiltSensor.onPause();
+		}
 	}
 
 	@Override
