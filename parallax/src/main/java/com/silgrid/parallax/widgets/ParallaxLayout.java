@@ -1,6 +1,7 @@
 package com.silgrid.parallax.widgets;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
@@ -8,11 +9,13 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import com.silgrid.parallax.R;
 import com.silgrid.parallax.sensor.TiltSensor;
 
 public class ParallaxLayout extends FrameLayout implements TiltSensor.SensorCallback {
 
-	private float mRotation;
+	private int mParallaxSpeed = 3;
+	private float mTranslation;
 	private float mBackgroundInitPosition;
 
 	private Drawable mBackground;
@@ -28,6 +31,17 @@ public class ParallaxLayout extends FrameLayout implements TiltSensor.SensorCall
 
 	public ParallaxLayout(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
+
+		TypedArray a = context.getTheme().obtainStyledAttributes(
+				attrs,
+				R.styleable.ParallaxImageView,
+				0, 0);
+
+		try {
+			mParallaxSpeed = a.getInt(R.styleable.ParallaxLayout_parallaxBackgroundSpeed, mParallaxSpeed);
+		} finally {
+			a.recycle();
+		}
 
 		mTiltSensor = new TiltSensor(context, this);
 
@@ -52,7 +66,7 @@ public class ParallaxLayout extends FrameLayout implements TiltSensor.SensorCall
 	public void draw(Canvas canvas) {
 		if (mBackground != null) {
 			canvas.save();
-			canvas.translate(mBackgroundInitPosition + mRotation, 0);
+			canvas.translate(mBackgroundInitPosition + mTranslation, 0);
 			mBackground.draw(canvas);
 			canvas.restore();
 		}
@@ -83,24 +97,47 @@ public class ParallaxLayout extends FrameLayout implements TiltSensor.SensorCall
 
 	@Override
 	public void onRotationChanged(float xAngle, float yAngle) {
-		mRotation = xAngle;
+		mTranslation = angleToTranslation(xAngle);
 		invalidate();
 
 		for (int i = 0; i < getChildCount(); ++i) {
 			View child = getChildAt(i);
 			if (child instanceof ParallaxImageView) {
-				((ParallaxImageView) child).setTiltLevel(xAngle);
+				((ParallaxImageView) child).setHorizontalTiltLevel(xAngle);
+				((ParallaxImageView) child).setVerticalTiltLevel(yAngle);
 				child.invalidate();
 			}
 		}
 	}
 
+	public int getParallaxSpeed() {
+		return mParallaxSpeed;
+	}
+
+	public void setParallaxSpeed(int parallaxSpeed) {
+		mParallaxSpeed = parallaxSpeed;
+	}
+
 	private void updateBackgroundBounds() {
-		float coef = (float) getBottom() / mBackground.getIntrinsicHeight();
-		int backgroundWidth = (int) (mBackground.getIntrinsicWidth() * coef);
+		float ratio = (float) getBottom() / mBackground.getIntrinsicHeight();
+		int backgroundWidth = (int) (mBackground.getIntrinsicWidth() * ratio);
 		int viewWidth = getRight() - getLeft();
 
 		mBackground.setBounds(0, 0, backgroundWidth, getBottom());
 		mBackgroundInitPosition = -(backgroundWidth - viewWidth) / 2;
+	}
+
+	private float angleToTranslation(float degrees) {
+		int bgWidth = mBackground.getBounds().right - mBackground.getBounds().left;
+		int diff = Math.abs((getRight() - getLeft()) - bgWidth);
+		float translation = mParallaxSpeed * degrees;
+
+		if (translation > diff / 2) {
+			translation = diff / 2;
+		} else if (translation < -diff / 2) {
+			translation = -diff / 2;
+		}
+
+		return translation;
 	}
 }
