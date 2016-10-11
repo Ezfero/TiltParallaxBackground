@@ -13,7 +13,7 @@
 			android:layout_height="200dp"
 			android:layout_gravity="center_horizontal"
 			android:scaleType="centerCrop"
-			android:src="@drawable/img"
+			android:src="@drawable/img1"
 			app:allowOutside="false"
 			app:parallaxSpeed="7"
 			app:parallaxDirection="horizontal"
@@ -24,7 +24,7 @@
 			android:layout_height="200dp"
 			android:layout_gravity="center_horizontal|bottom"
 			android:scaleType="centerCrop"
-			android:src="@drawable/img"
+			android:src="@drawable/img2"
 			app:allowOutside="true"
 			app:parallaxSpeed="3"
 			/>
