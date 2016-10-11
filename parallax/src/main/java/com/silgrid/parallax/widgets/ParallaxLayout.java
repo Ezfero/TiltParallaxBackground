@@ -16,8 +16,10 @@ import com.silgrid.parallax.sensor.TiltSensor;
 public class ParallaxLayout extends FrameLayout implements TiltSensor.SensorCallback {
 
 	private int mParallaxSpeed = 3;
-	private float mTranslation;
-	private float mBackgroundInitPosition;
+	private float mTranslationX;
+	private float mTranslationY;
+	private float mBackgroundInitXPosition;
+	private float mBackgroundInitYPosition;
 
 	private Drawable mBackground;
 	private TiltSensor mTiltSensor;
@@ -78,7 +80,7 @@ public class ParallaxLayout extends FrameLayout implements TiltSensor.SensorCall
 	public void draw(Canvas canvas) {
 		if (mBackground != null) {
 			canvas.save();
-			canvas.translate(mBackgroundInitPosition + mTranslation, 0);
+			canvas.translate(mBackgroundInitXPosition + mTranslationX, mBackgroundInitYPosition + mTranslationY);
 			mBackground.draw(canvas);
 			canvas.restore();
 		}
@@ -104,12 +106,12 @@ public class ParallaxLayout extends FrameLayout implements TiltSensor.SensorCall
 
 	@Override
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-		updateBackgroundBounds();
+		updateBackgroundBounds(w, h);
 	}
 
 	@Override
 	public void onRotationChanged(float xAngle, float yAngle) {
-		mTranslation = angleToTranslation(xAngle);
+		mTranslationX = angleToTranslation(xAngle);
 		invalidate();
 
 		for (int i = 0; i < getChildCount(); ++i) {
@@ -130,13 +132,24 @@ public class ParallaxLayout extends FrameLayout implements TiltSensor.SensorCall
 		mParallaxSpeed = parallaxSpeed;
 	}
 
-	private void updateBackgroundBounds() {
-		float ratio = (float) getBottom() / mBackground.getIntrinsicHeight();
-		int backgroundWidth = (int) (mBackground.getIntrinsicWidth() * ratio);
-		int viewWidth = getRight() - getLeft();
+	private void updateBackgroundBounds(int width, int height) {
+		boolean isLandscapeImage = mBackground.getIntrinsicWidth() > mBackground.getIntrinsicHeight();
 
-		mBackground.setBounds(0, 0, backgroundWidth, getBottom());
-		mBackgroundInitPosition = -(backgroundWidth - viewWidth) / 2;
+		int bgWidth = width;
+		int bgHeight = height;
+		if (isLandscapeImage) {
+			float ratio = mBackground.getIntrinsicWidth() > width
+					? (float) height / mBackground.getIntrinsicHeight()
+					: (float) width / mBackground.getIntrinsicWidth();
+			bgWidth = (int) (mBackground.getIntrinsicWidth() * ratio);
+		} else {
+			float ratio = (float) width / mBackground.getIntrinsicWidth();
+			bgHeight = (int) (mBackground.getIntrinsicHeight() * ratio);
+		}
+
+		mBackground.setBounds(0, 0, bgWidth, bgHeight);
+		mBackgroundInitXPosition = -(bgWidth - width) / 2;
+		mBackgroundInitYPosition = -(bgHeight - height) / 2;
 	}
 
 	private float angleToTranslation(float degrees) {

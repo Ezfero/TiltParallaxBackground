@@ -1,6 +1,7 @@
 package com.silgrid.parallax.sensor;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -13,10 +14,12 @@ public class TiltSensor implements SensorEventListener {
 	}
 
 	private Sensor mSensor;
+	private Context mContext;
 	private SensorManager mSensorManager;
 	private SensorCallback mCallback;
 
 	public TiltSensor(Context context, SensorCallback callback) {
+		mContext = context;
 		mCallback = callback;
 
 		mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
@@ -52,6 +55,20 @@ public class TiltSensor implements SensorEventListener {
 		orientation[0] = (float) Math.toDegrees(orientation[0]); //Yaw
 		orientation[1] = (float) Math.toDegrees(orientation[1]); //Pitch
 		orientation[2] = (float) Math.toDegrees(orientation[2]); //Roll
-		return orientation;
+		return transformOrientation(orientation);
 	}
+
+	private float[] transformOrientation(float[] values) {
+		int orientation = mContext.getResources().getConfiguration().orientation;
+		if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+			return values;
+		} else if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+			float temp = values[1];
+			values[1] = -values[2];
+			values[2] = -temp;
+			return values;
+		}
+		return values;
+	}
+
 }
